@@ -121,6 +121,33 @@ export const starterAzurePipelines = async (opts: {
                 const projectPathParts = projectPath
                   .split(path.sep)
                   .filter(p => p !== "");
+                const projectName =
+                  projectPathParts.length > 1
+                    ? projectPathParts.slice(-1)[0]
+                    : "";
+                return {
+                  script: generateYamlScript([
+                    `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${projectName} | tr '[:upper:]' '[:lower:]')`,
+                    `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                    `commitId=$(Build.SourceVersion)`,
+                    `commitId=$(echo "\${commitId:0:7}")`,
+                    `service=$(Build.Repository.Name)`,
+                    "service=${service##*/}",
+                    `echo "Downloading SPK"`,
+                    `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
+                    `chmod +x build.sh`,
+                    `. ./build.sh --source-only`,
+                    `get_spk_version`,
+                    `download_spk`,
+                    `./spk/spk deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
+                  ]),
+                  displayName: "Update Spektate storage with build pipeline"
+                };
+              }),
+              ...cleanedPaths.map(projectPath => {
+                const projectPathParts = projectPath
+                  .split(path.sep)
+                  .filter(p => p !== "");
                 // If a the projectPath contains more than 1 segment (a service in a
                 // mono-repo), use the last part as the project name as it will the
                 // folder containing the Dockerfile. Otherwise, its a standard service
@@ -231,10 +258,22 @@ export const starterAzurePipelines = async (opts: {
                     `az extension add --name azure-devops`,
                     ``,
                     `echo 'az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
-                    `az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."`
+                    `az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
+
+                    `latest_commit=$(git rev-parse --short HEAD)`,
+                    `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${projectName} | tr '[:upper:]' '[:lower:]')`,
+                    `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                    `VERSION_TO_DOWNLOAD=$(curl -s "https://api.github.com/repos/CatalystCode/spk/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')`,
+                    `echo "Downloading SPK"`,
+                    `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
+                    `chmod +x build.sh`,
+                    `. ./build.sh --source-only`,
+                    `get_spk_version`,
+                    `download_spk`,
+                    `./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name`
                   ]),
                   displayName:
-                    "Download Fabrikate, Update HLD, Push changes, Open PR",
+                    "Download Fabrikate, Update HLD, Push changes, Open PR, optionally push to Spektate storage",
                   env: {
                     ACCESS_TOKEN_SECRET: "$(PAT)",
                     AZURE_DEVOPS_EXT_PAT: "$(PAT)",
@@ -422,6 +461,22 @@ const manifestGenerationPipelineYaml = () => {
           REPO: "$(MANIFEST_REPO)",
           BRANCH_NAME: "$(Build.SourceBranchName)"
         }
+      },
+      {
+        script: generateYamlScript([
+          `cd "$HOME"/\${MANIFEST_REPO##*/}`,
+          `commitId=$(Build.SourceVersion)`,
+          `commitId=$(echo "\${commitId:0:7}")`,
+          `latest_commit=$(git rev-parse --short HEAD)`,
+          `echo "Downloading SPK"`,
+          `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
+          `chmod +x build.sh`,
+          `. ./build.sh --source-only`,
+          `get_spk_version`,
+          `download_spk`,
+          `./spk/spk deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`
+        ]),
+        displayName: "Update manifest pipeline details in Spektate db"
       }
     ]
   };

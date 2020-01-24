@@ -52,7 +52,7 @@ fi
 cd $TEST_WORKSPACE
 
 # Introspection Storage Account Setup
-sa_name=fabrikamsatst
+sa_name=fabrikamsatst1
 sat_name=fabrikamdeployments
 sa_partition_key="integration-test"
 
