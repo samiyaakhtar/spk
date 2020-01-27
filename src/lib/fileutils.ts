@@ -141,7 +141,9 @@ export const starterAzurePipelines = async (opts: {
                     `download_spk`,
                     `./spk/spk deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p1 $(Build.BuildId) --image-tag $tag_name --commit-id $commitId --service $service`
                   ]),
-                  displayName: "Update Spektate storage with build pipeline"
+                  displayName: "Update Spektate storage with build pipeline",
+                  condition:
+                    "and(ne(variables['ACCOUNT_NAME'], ''), ne(variables['ACCOUNT_KEY'], ''),ne(variables['TABLE_NAME'], ''),ne(variables['PARTITION_KEY'], ''))"
                 };
               }),
               ...cleanedPaths.map(projectPath => {
@@ -260,6 +262,8 @@ export const starterAzurePipelines = async (opts: {
                     `echo 'az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
                     `az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
 
+                    `if [[ -z $(ACCOUNT_NAME) && -z $(ACCOUNT_KEY) && -z $(TABLE_NAME) && -z $(PARTITION_KEY) ]]; then`,
+
                     `latest_commit=$(git rev-parse --short HEAD)`,
                     `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${projectName} | tr '[:upper:]' '[:lower:]')`,
                     `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
@@ -269,7 +273,8 @@ export const starterAzurePipelines = async (opts: {
                     `. ./build.sh --source-only`,
                     `get_spk_version`,
                     `download_spk`,
-                    `./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name`
+                    `./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name`,
+                    `fi`
                   ]),
                   displayName:
                     "Download Fabrikate, Update HLD, Push changes, Open PR, optionally push to Spektate storage",
@@ -475,7 +480,9 @@ const manifestGenerationPipelineYaml = () => {
           `download_spk`,
           `./spk/spk deployment create -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p3 $(Build.BuildId) --hld-commit-id $commitId --manifest-commit-id $latest_commit`
         ]),
-        displayName: "Update manifest pipeline details in Spektate db"
+        displayName: "Update manifest pipeline details in Spektate db",
+        condition:
+          "and(ne(variables['ACCOUNT_NAME'], ''), ne(variables['ACCOUNT_KEY'], ''),ne(variables['TABLE_NAME'], ''),ne(variables['PARTITION_KEY'], ''))"
       }
     ]
   };
