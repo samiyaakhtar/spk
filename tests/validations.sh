@@ -168,11 +168,11 @@ spk project create-variable-group $vg_name -r $ACR_NAME -d $hld_repo_url -u $SP_
 variable_group_exists $AZDO_ORG_URL $AZDO_PROJECT $vg_name "fail"
 
 # Add introspection variables to variable group
-# variable_group_id=$(az pipelines variable-group list --org $AZDO_ORG_URL -p $AZDO_PROJECT | jq '.[] | select(.name=="fabrikam-vg") | .id')
-# variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_KEY" $sa_access_key "secret"
-# variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_NAME" $AZ_STORAGE_ACCOUNT
-# variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "PARTITION_KEY" $sa_partition_key
-# variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "TABLE_NAME" $sat_name
+variable_group_id=$(az pipelines variable-group list --org $AZDO_ORG_URL -p $AZDO_PROJECT | jq '.[] | select(.name=="fabrikam-vg") | .id')
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_KEY" "kH7RtRfP6roJRzYqctsVExOtji/ZC7LzsWCLSDfY92u3kD+EJzcvYnshi4Lpf9OcX4YVLGFH3gtf07IvspibcA==" "secret"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "ACCOUNT_NAME" "saakhtacjteststorage"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "PARTITION_KEY" "hello-bedrock"
+variable_group_variable_create $variable_group_id $AZDO_ORG_URL $AZDO_PROJECT "TABLE_NAME" "deployments"
 
 spk service create $FrontEnd -d $services_dir >> $TEST_WORKSPACE/log.txt
 directory_to_check="$services_full_dir/$FrontEnd"
