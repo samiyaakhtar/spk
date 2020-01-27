@@ -107,8 +107,8 @@ If you wish to run these tests locally, skip ahead to
    - AZDO_ORG (e.g. `epicstuff`)
    - AZDO_PAT (e.g. Personal Access Token with **read/write/manage** access to
      AZDO_PROJECT) <-- 🔒
-   - AZ_RESOURCE_GROUP - The name of an Azure resource group (for
-     `introspection-validations.sh`)
+   - AZ_RESOURCE_GROUP - The name of an Azure resource group
+   - AZ_STORAGE_ACCOUNT - The name of an Azure storage account
    - SP_APP_ID (e.g Service Principal App Id)
    - SP_PASS (e.g Service Principal Password) <-- 🔒
    - SP_TENANT (e.g Service Principal Tenant Id)
@@ -148,7 +148,11 @@ When testing locally you don't need to do the above set up since there is no
 pipeline. Instead run these steps:
 
 1. Login into AZ CLI
-2. Install Azure DevOps Extension
+2. Install Azure DevOps Extension (make sure you have version >= 0.17.0
+   installed)
+   ```
+   az extension add --name azure-devops
+   ```
 3. Set the following environment variables
    <pre>
    export SPK_LOCATION=<b>REPLACE_ME</b>
@@ -161,6 +165,7 @@ pipeline. Instead run these steps:
    export SP_APP_ID=<b>REPLACE_ME</b>
    export SP_TENANT=<b>REPLACE_ME</b>
    export AZ_RESOURCE_GROUP=<b>REPLACE_ME</b>
+   export AZ_STORAGE_ACCOUNT=<b>REPLACE_ME</b>
    </pre>
 4. Navigate to this directory in shell
 5. RUN --> `$ sh validations.sh`

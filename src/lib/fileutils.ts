@@ -673,7 +673,8 @@ export const addNewServiceToBedrockFile = (
   newServicePath: string,
   svcDisplayName: string,
   helmConfig: IHelmConfig,
-  middlewares: string[] = []
+  middlewares: string[],
+  k8sServicePort: number
 ) => {
   const bedrockFile = yaml.safeLoad(
     fs.readFileSync(bedrockFilePath, "utf8")
@@ -682,6 +683,7 @@ export const addNewServiceToBedrockFile = (
   bedrockFile.services["./" + newServicePath] = {
     displayName: svcDisplayName,
     helm: helmConfig,
+    k8sServicePort,
     middlewares
   };
 
