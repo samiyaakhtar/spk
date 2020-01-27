@@ -220,6 +220,7 @@ export const starterAzurePipelines = async (opts: {
                   script: generateYamlScript([
                     `export PROJECT_NAME_LOWER=$(echo ${projectName} | tr '[:upper:]' '[:lower:]')`,
                     `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-$PROJECT_NAME_LOWER | tr '[:upper:]' '[:lower:]')`,
+                    `export BRANCH_NAME=DEPLOY/$BUILD_REPO_NAME-$(Build.SourceBranchName)-$(Build.BuildNumber)`,
                     `# --- From https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/release.sh`,
                     `. build.sh --source-only`,
                     ``,
@@ -237,7 +238,7 @@ export const starterAzurePipelines = async (opts: {
                     `# --- End Script`,
                     ``,
                     `# Update HLD`,
-                    `git checkout -b "DEPLOY/$BUILD_REPO_NAME-$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
+                    `git checkout -b "$BRANCH_NAME"`,
                     `../fab/fab set --subcomponent $PROJECT_NAME_LOWER image.tag=$(Build.SourceBranchName)-$(Build.BuildNumber)`,
                     `echo "GIT STATUS"`,
                     `git status`,
@@ -261,11 +262,12 @@ export const starterAzurePipelines = async (opts: {
                     ``,
                     `echo 'az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."'`,
                     `az repos pr create --description "Updating $PROJECT_NAME_LOWER to $(Build.SourceBranchName)-$(Build.BuildNumber)."`,
-
-                    `if [[ -z $(ACCOUNT_NAME) && -z $(ACCOUNT_KEY) && -z $(TABLE_NAME) && -z $(PARTITION_KEY) ]]; then`,
-
+                    ``,
+                    `# Update introspection storage with this information, if applicable`,
+                    `if [ -z "$(ACCOUNT_NAME)" -o -z "$(ACCOUNT_KEY)" -o -z "$(TABLE_NAME)" -o -z "$(PARTITION_KEY)" ]; then`,
+                    `echo "Introspection variables are not defined. Skipping..."`,
+                    `else`,
                     `latest_commit=$(git rev-parse --short HEAD)`,
-                    `export BUILD_REPO_NAME=$(echo $(Build.Repository.Name)-${projectName} | tr '[:upper:]' '[:lower:]')`,
                     `tag_name="$BUILD_REPO_NAME:$(Build.SourceBranchName)-$(Build.BuildNumber)"`,
                     `echo "Downloading SPK"`,
                     `curl https://raw.githubusercontent.com/Microsoft/bedrock/master/gitops/azure-devops/build.sh > build.sh`,
@@ -273,7 +275,7 @@ export const starterAzurePipelines = async (opts: {
                     `. ./build.sh --source-only`,
                     `get_spk_version`,
                     `download_spk`,
-                    `./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY)  --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $(Build.SourceBranchName) --image-tag $tag_name`,
+                    `./spk/spk deployment create  -n $(ACCOUNT_NAME) -k $(ACCOUNT_KEY) -t $(TABLE_NAME) -p $(PARTITION_KEY) --p2 $(Build.BuildId) --hld-commit-id $latest_commit --env $BRANCH_NAME --image-tag $tag_name`,
                     `fi`
                   ]),
                   displayName:
