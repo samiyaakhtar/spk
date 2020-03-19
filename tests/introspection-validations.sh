@@ -52,6 +52,8 @@ alias spk=$SPK_LOCATION
 echo "SPK Version: $(spk --version)"
 echo "Running from $(pwd)"
 
+echo "spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_onboard_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $subscription_id --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT"
+
 echo "Running from $(pwd)"
 if [ -d "$TEST_WORKSPACE"  ]; then rm -Rf $TEST_WORKSPACE; fi
 
