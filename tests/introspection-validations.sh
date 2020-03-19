@@ -69,6 +69,7 @@ subscription_id=$(az account list | jq '.[] | select(.isDefault == true) | .id' 
 storage_account_exists $AZ_STORAGE_ACCOUNT $AZ_RESOURCE_GROUP "fail"
 
 onboard_result=$(spk deployment onboard -s $AZ_STORAGE_ACCOUNT -t $sat_onboard_name -l $sa_location -r $AZ_RESOURCE_GROUP --subscription-id $subscription_id --service-principal-id $SP_APP_ID --service-principal-password $SP_PASS --tenant-id $SP_TENANT)
+echo onboard_result
 storage_account_table_exists $sat_onboard_name $AZ_STORAGE_ACCOUNT "fail"
 
 echo "Successfully validated spk deployment onboard."
